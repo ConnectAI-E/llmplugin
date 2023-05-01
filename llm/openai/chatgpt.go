@@ -62,8 +62,9 @@ func (c ChatGPT) makeChatGPTMessage(messages []llm.LlmMessage) []openai.ChatComp
 func (c ChatGPT) send(ctx context.Context, messages []openai.ChatCompletionMessage) (*llm.LlmAnswer, error) {
 
 	resp, err := c.client.CreateChatCompletion(ctx, openai.ChatCompletionRequest{
-		Model:    c.model,
-		Messages: messages,
+		Model:       c.model,
+		Messages:    messages,
+		Temperature: 0,
 	})
 	if err != nil {
 		return nil, err

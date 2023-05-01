@@ -21,6 +21,11 @@ func TestCalculator_Do(t *testing.T) {
 			"1-1",
 			"0",
 		},
+		{
+			"Mul",
+			"1*1",
+			"1",
+		},
 	}
 	for _, tt := range ts {
 		t.Run(tt.testname, func(t *testing.T) {
