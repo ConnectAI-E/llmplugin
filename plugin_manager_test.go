@@ -9,6 +9,7 @@ import (
 	"github.com/agi-cn/llmplugin/llm/openai"
 	"github.com/agi-cn/llmplugin/plugins/calculator"
 	"github.com/agi-cn/llmplugin/plugins/google"
+	"github.com/agi-cn/llmplugin/plugins/stablediffusion"
 	"github.com/joho/godotenv"
 
 	"github.com/stretchr/testify/assert"
@@ -25,20 +26,39 @@ func TestManagerSelectPlugin(t *testing.T) {
 		require.Equal(t, 1, len(pluginCtxs))
 		require.True(t, includePlugin(pluginCtxs, "Calculator"))
 
-		choice := pluginCtxs[0]
+		choices := pluginCtxs[0]
 
-		answer, err := choice.Plugin.Do(context.Background(), choice.Input)
+		answer, err := choices.Plugin.Do(context.Background(), choices.Input)
 		require.NoError(t, err)
 
 		assert.Equal(t, "30", answer)
 	})
 
 	t.Run("Query Weather", func(t *testing.T) {
-		choice, err := manager.Select(context.Background(), "How is the weather today?")
+		choices, err := manager.Select(context.Background(), "How is the weather today?")
 		assert.NoError(t, err)
 
-		assert.NotEmpty(t, choice)
-		assert.True(t, includePlugin(choice, "Weather"))
+		assert.NotEmpty(t, choices)
+		assert.True(t, includePlugin(choices, "Weather"))
+	})
+
+	t.Run("Stable Diffusion", func(t *testing.T) {
+		choices, err := manager.Select(context.Background(), "Draw a girl image")
+		assert.NoError(t, err)
+
+		assert.NotEmpty(t, choices)
+		assert.True(t, includePlugin(choices, "StableDiffusion"))
+	})
+}
+
+func TestManagerSelectPlugin_WithoutChoice(t *testing.T) {
+	manager := newChatGPTManager()
+
+	t.Run("Quick Sort Source Code", func(t *testing.T) {
+		choices, err := manager.Select(context.Background(), "quick sort source code in python")
+		assert.NoError(t, err)
+
+		assert.Empty(t, choices)
 	})
 
 }
@@ -83,6 +103,7 @@ func TestChoicePlugins(t *testing.T) {
 		assert.True(t,
 			includePlugin(got, "Google"))
 	})
+
 }
 
 func newChatGPTManager() *PluginManager {
@@ -124,5 +145,16 @@ func newPlugins() []Plugin {
 
 		google.NewGoogle(googleEngineID, googleToken),
 	}
+
+	{ // stable diffusion
+		var sdAddr = os.Getenv("SD_ADDR")
+		if len(sdAddr) != 0 {
+			plugins = append(plugins,
+				stablediffusion.NewStableDiffusion(sdAddr),
+			)
+		}
+
+	}
+
 	return plugins
 }
